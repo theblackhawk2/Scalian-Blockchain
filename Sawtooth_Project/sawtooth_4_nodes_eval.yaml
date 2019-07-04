@@ -1,0 +1,372 @@
+version: '3'
+
+volumes:
+  keys:
+  cargo-registry:
+  cargo-git:
+  cargo-target:
+  grafana-volume:
+    external: true
+  influxdb-volume:
+    external: true 
+
+services:
+
+  influxdb:
+    image: influxdb
+    container_name: influxdb
+    restart: always
+    ports:
+      - 8086:8086
+    environment:
+      - INFLUXDB_DB=telegraf
+      - INFLUXDB_ADMIN_ENABLED=true
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=supersecretpassword
+      - INFLUXDB_USER=telegraf
+      - INFLUXDB_USER_PASSWORD=secretpassword
+    volumes:
+      - influxdb-volume:/var/lib/influxdb
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: always
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana-volume:/var/lib/grafana
+  shell:
+    image: hyperledger/sawtooth-all:1.1
+    container_name: sawtooth-shell-default
+    volumes: 
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    entrypoint: "bash -c \"\
+                 sawtooth keygen && \
+                 tail -f /dev/null \
+                 \""
+  validator-0:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-default-0
+    volumes:
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: "bash -c \"\
+        sawadm keygen validator-1 && \
+        sawadm keygen validator-2 && \
+        sawadm keygen validator-3 && \
+        sawadm keygen && \
+        sawset genesis \
+          -k /etc/sawtooth/keys/validator.priv \
+          -o config-genesis.batch && \
+        sawset proposal create \
+          -k /etc/sawtooth/keys/validator.priv \
+          sawtooth.consensus.algorithm.name=pbft \
+          sawtooth.consensus.algorithm.version=0.1 \
+          sawtooth.consensus.pbft.members=\\['\\\"'$$(cat /etc/sawtooth/keys/validator.pub)'\\\"','\\\"'$$(cat /etc/sawtooth/keys/validator-1.pub)'\\\"','\\\"'$$(cat /etc/sawtooth/keys/validator-2.pub)'\\\"','\\\"'$$(cat /etc/sawtooth/keys/validator-3.pub)'\\\"'\\] \
+          sawtooth.consensus.pbft.block_duration=100 \
+          sawtooth.consensus.pbft.view_change_timeout=4000 \
+          sawtooth.consensus.pbft.message_timeout=10 \
+          sawtooth.consensus.pbft.max_log_size=1000 \
+          -o config.batch && \
+        sawadm genesis \
+          config-genesis.batch config.batch && \
+        mv /etc/sawtooth/keys/validator-* /shared_keys && \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-0:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --scheduler parallel \
+            --maximum-peer-connectivity 3 \
+            --opentsdb-db telegraf \
+            --opentsdb-url http://influxdb:8086 \
+    \""
+    stop_signal: SIGKILL
+
+  validator-1:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-default-1
+    volumes:
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: "bash -c \"\
+        while true; do if [ -e /shared_keys/validator-1.pub ]; then cp /shared_keys/validator-1.priv /etc/sawtooth/keys/validator.priv && cp /shared_keys/validator-1.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-1:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 3 \
+    \""
+    stop_signal: SIGKILL
+
+  validator-2:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-default-2
+    volumes:
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: "bash -c \"\
+        while true; do if [ -e /shared_keys/validator-2.pub ]; then cp /shared_keys/validator-2.priv /etc/sawtooth/keys/validator.priv && cp /shared_keys/validator-2.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-2:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 3 \
+    \""
+    stop_signal: SIGKILL
+
+  validator-3:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-default-3
+    volumes:
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: "bash -c \"\
+        while true; do if [ -e /shared_keys/validator-3.pub ]; then cp /shared_keys/validator-3.priv /etc/sawtooth/keys/validator.priv && cp /shared_keys/validator-3.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-3:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 3 \
+    \""
+    stop_signal: SIGKILL
+
+  rest-api-0:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-0
+    expose:
+      - 8008
+    command: |
+      bash -c "
+        sawtooth-rest-api \
+          --connect tcp://validator-0:4004 \
+          --bind rest-api-0:8008 \
+          --opentsdb-db telegraf \
+          --opentsdb-url http://influxdb:8086
+
+      "
+    stop_signal: SIGKILL
+
+  rest-api-1:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-1
+    expose:
+      - 8008
+    command: |
+      bash -c "
+        sawtooth-rest-api \
+          --connect tcp://validator-1:4004 \
+          --bind rest-api-1:8008
+      "
+    stop_signal: SIGKILL
+
+  rest-api-2:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-2
+    expose:
+      - 8008
+    command: |
+      bash -c "
+        sawtooth-rest-api \
+          --connect tcp://validator-2:4004 \
+          --bind rest-api-2:8008
+      "
+    stop_signal: SIGKILL
+
+  rest-api-3:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-3
+    expose:
+      - 8008
+    command: |
+      bash -c "
+        sawtooth-rest-api \
+          --connect tcp://validator-3:4004 \
+          --bind rest-api-3:8008
+      "
+    stop_signal: SIGKILL
+
+  pbft-0:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-0:5050 -vv
+    stop_signal: SIGKILL
+
+  pbft-1:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-1:5050 -vv
+    stop_signal: SIGKILL
+
+  pbft-2:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-2:5050 -vv
+    stop_signal: SIGKILL
+  pbft-3:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-3:5050 -vv
+    stop_signal: SIGKILL
+
+  settings-tp-0:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-default-0
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-0:4004
+    stop_signal: SIGKILL
+
+  settings-tp-1:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-default-1
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-1:4004
+    stop_signal: SIGKILL
+
+  settings-tp-2:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-default-2
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-2:4004
+    stop_signal: SIGKILL
+
+  settings-tp-3:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-default-3
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-3:4004
+    stop_signal: SIGKILL
+
+  intkey-tp-0:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-python-default-0
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-0:4004
+    stop_signal: SIGKILL
+
+  intkey-tp-1:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-python-default-1
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-1:4004
+    stop_signal: SIGKILL
+
+  intkey-tp-2:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-python-default-2
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-2:4004
+    stop_signal: SIGKILL
+
+  intkey-tp-3:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-python-default-3
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-3:4004
+    stop_signal: SIGKILL
+
+  assets-tp-0:
+    image: hyperledger/sawtooth-all:1.1
+    container_name: assets-tp-default-0
+    volumes:
+      - ./Assets:/var/Assets
+    expose:
+      - 4004
+    command: python3 /var/Assets/Assets_tp/main.py -C tcp://validator-0:4004
+    stop_signal: SIGKILL 
+  
+  assets-tp-1:
+    image: hyperledger/sawtooth-all:1.1
+    container_name: assets-tp-default-1
+    volumes:
+      - ./Assets:/var/Assets
+    expose:
+      - 4004
+    command: python3 /var/Assets/Assets_tp/main.py -C tcp://validator-1:4004
+    stop_signal: SIGKILL 
+
+  assets-tp-2:
+    image: hyperledger/sawtooth-all:1.1
+    container_name: assets-tp-default-2
+    volumes:
+      - ./Assets:/var/Assets
+    expose:
+      - 4004
+    command: python3 /var/Assets/Assets_tp/main.py -C tcp://validator-2:4004
+    stop_signal: SIGKILL 
+
+  assets-tp-3:
+    image: hyperledger/sawtooth-all:1.1
+    container_name: assets-tp-default-3
+    volumes:
+      - ./Assets:/var/Assets
+    expose:
+      - 4004
+    command: python3 /var/Assets/Assets_tp/main.py -C tcp://validator-3:4004
+    stop_signal: SIGKILL 

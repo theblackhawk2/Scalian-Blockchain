@@ -1,0 +1,50 @@
+  validator-0:
+    image : hyperledger/sawtooth-validator:1.1
+    container_name : sawtooth-validator-0
+    volumes :
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose :
+      - 4004
+      - 5050
+      - 8800
+  validator-1:
+    image : hyperledger/sawtooth-validator:1.1
+    container_name : sawtooth-validator-1
+    volumes :
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose :
+      - 4004
+      - 5050
+      - 8800
+  validator-2:
+    image : hyperledger/sawtooth-validator:1.1
+    container_name : sawtooth-validator-2
+    volumes :
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose :
+      - 4004
+      - 5050
+      - 8800
+  validator-3:
+    image : hyperledger/sawtooth-validator:1.1
+    container_name : sawtooth-validator-3
+    volumes :
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose :
+      - 4004
+      - 5050
+      - 8800
+  validator-4:
+    image : hyperledger/sawtooth-validator:1.1
+    container_name : sawtooth-validator-4
+    volumes :
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose :
+      - 4004
+      - 5050
+      - 8800

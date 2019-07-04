@@ -1,0 +1,4467 @@
+version: '3'
+
+volumes:
+  skeys:
+  keys:
+  cargo-registry:
+  cargo-git:
+  cargo-target:
+  grafana-volume:
+    external: true
+  influxdb-volume:
+    external: true
+
+services:
+
+  influxdb:
+    image: influxdb
+    container_name: influxdb
+    restart: always
+    ports:
+     - 8086:8086
+    environment:
+     - INFLUXDB_DB=metrics
+     - INFLUXDB_ADMIN_ENABLED=true
+     - INFLUXDB_ADMIN_USER=admin
+     - INFLUXDB_ADMIN_PASSWORD=supersecretpassword
+     - INFLUXDB_USER=telegraf
+     - INFLUXDB_USER_PASSWORD=secretpassword
+    volumes:
+     - influxdb-volume:/var/lib/influxdb
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: always
+    ports:
+     - 3000:3000
+    volumes:
+     - grafana-volume:/var/lib/grafana
+
+  shell:
+    image: hyperledger/sawtooth-all:1.1
+    container_name: sawtooth-shell-default
+    volumes:
+     - ./Assets:/var/Assets
+    entrypoint: "bash -c \"sawtooth keygen && tail -f /dev/null \""
+
+  validator-0:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-0
+    volumes:
+      - skeys:/dynamic_keys
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        sawadm keygen validator-1 && \
+        sawadm keygen validator-2 && \
+        sawadm keygen validator-3 && \
+        sawadm keygen validator-4 && \
+        sawadm keygen validator-5 && \
+        sawadm keygen validator-6 && \
+        sawadm keygen validator-7 && \
+        sawadm keygen validator-8 && \
+        sawadm keygen validator-9 && \
+        sawadm keygen validator-10 && \
+        sawadm keygen validator-11 && \
+        sawadm keygen validator-12 && \
+        sawadm keygen validator-13 && \
+        sawadm keygen validator-14 && \
+        sawadm keygen validator-15 && \
+        sawadm keygen validator-16 && \
+        sawadm keygen validator-17 && \
+        sawadm keygen validator-18 && \
+        sawadm keygen validator-19 && \
+        sawadm keygen validator-20 && \
+        sawadm keygen validator-21 && \
+        sawadm keygen validator-22 && \
+        sawadm keygen validator-23 && \
+        sawadm keygen validator-24 && \
+        sawadm keygen validator-25 && \
+        sawadm keygen validator-26 && \
+        sawadm keygen validator-27 && \
+        sawadm keygen validator-28 && \
+        sawadm keygen validator-29 && \
+        sawadm keygen && \
+        sawset genesis \
+          -k /etc/sawtooth/keys/validator.priv \
+          -o config-genesis.batch && \
+        sawset proposal create \
+          -k /etc/sawtooth/keys/validator.priv \
+          sawtooth.consensus.algorithm.name=pbft \
+          sawtooth.consensus.algorithm.version=0.1 \
+          sawtooth.consensus.pbft.members=\\['\\\!dq!'$$(cat /etc/sawtooth/keys/validator.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-1.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-2.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-3.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-4.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-5.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-6.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-7.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-8.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-9.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-10.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-11.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-12.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-13.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-14.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-15.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-16.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-17.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-18.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-19.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-20.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-21.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-22.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-23.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-24.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-25.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-26.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-27.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-28.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-29.pub)'\\\!dq!'\\] \
+          sawtooth.consensus.pbft.block_duration=100 \
+          sawtooth.consensus.pbft.view_change_timeout=4000 \
+          sawtooth.consensus.pbft.message_timeout=40 \
+          sawtooth.consensus.pbft.max_log_size=1000 \
+          -o config.batch && \
+        sawadm genesis \
+          config-genesis.batch config.batch && \
+        cp /etc/sawtooth/keys/validator* /dynamic_keys && \
+        mv /etc/sawtooth/keys/validator-* /shared_keys && \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-0:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+            --opentsdb-db telegraf \
+            --opentsdb-url http://influxdb:8086 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-0:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-0
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-0:4004 \
+          --bind rest-api-0:8008 \
+          --opentsdb-db telegraf \
+          --opentsdb-url http://influxdb:8086
+
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-0:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-0
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-0:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-0:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-0
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-0:4004
+    stop_signal: SIGKILL
+
+
+  pbft-0:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-0:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-1:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-1
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-1.pub ]; then mv /shared_keys/validator-1.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-1.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-1:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-1:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-1
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-1:4004 \
+          --bind rest-api-1:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-1:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-1
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-1:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-1:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-1
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-1:4004
+    stop_signal: SIGKILL
+
+
+  pbft-1:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-1:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-2:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-2
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-2.pub ]; then mv /shared_keys/validator-2.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-2.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-2:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-2:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-2
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-2:4004 \
+          --bind rest-api-2:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-2:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-2
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-2:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-2:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-2
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-2:4004
+    stop_signal: SIGKILL
+
+
+  pbft-2:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-2:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-3:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-3
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-3.pub ]; then mv /shared_keys/validator-3.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-3.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-3:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-3:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-3
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-3:4004 \
+          --bind rest-api-3:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-3:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-3
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-3:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-3:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-3
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-3:4004
+    stop_signal: SIGKILL
+
+
+  pbft-3:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-3:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-4:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-4
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-4.pub ]; then mv /shared_keys/validator-4.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-4.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-4:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-4:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-4
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-4:4004 \
+          --bind rest-api-4:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-4:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-4
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-4:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-4:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-4
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-4:4004
+    stop_signal: SIGKILL
+
+
+  pbft-4:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-4:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-5:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-5
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-5.pub ]; then mv /shared_keys/validator-5.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-5.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-5:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-5:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-5
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-5:4004 \
+          --bind rest-api-5:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-5:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-5
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-5:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-5:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-5
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-5:4004
+    stop_signal: SIGKILL
+
+
+  pbft-5:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-5:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-6:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-6
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-6.pub ]; then mv /shared_keys/validator-6.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-6.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-6:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-6:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-6
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-6:4004 \
+          --bind rest-api-6:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-6:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-6
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-6:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-6:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-6
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-6:4004
+    stop_signal: SIGKILL
+
+
+  pbft-6:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-6:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-7:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-7
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-7.pub ]; then mv /shared_keys/validator-7.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-7.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-7:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-7:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-7
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-7:4004 \
+          --bind rest-api-7:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-7:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-7
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-7:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-7:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-7
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-7:4004
+    stop_signal: SIGKILL
+
+
+  pbft-7:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-7:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-8:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-8
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-8.pub ]; then mv /shared_keys/validator-8.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-8.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-8:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-8:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-8
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-8:4004 \
+          --bind rest-api-8:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-8:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-8
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-8:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-8:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-8
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-8:4004
+    stop_signal: SIGKILL
+
+
+  pbft-8:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-8:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-9:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-9
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-9.pub ]; then mv /shared_keys/validator-9.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-9.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-9:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-9:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-9
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-9:4004 \
+          --bind rest-api-9:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-9:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-9
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-9:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-9:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-9
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-9:4004
+    stop_signal: SIGKILL
+
+
+  pbft-9:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-9:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-10:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-10
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-10.pub ]; then mv /shared_keys/validator-10.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-10.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-10:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-10:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-10
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-10:4004 \
+          --bind rest-api-10:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-10:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-10
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-10:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-10:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-10
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-10:4004
+    stop_signal: SIGKILL
+
+
+  pbft-10:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-10:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-11:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-11
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-11.pub ]; then mv /shared_keys/validator-11.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-11.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-11:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-11:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-11
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-11:4004 \
+          --bind rest-api-11:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-11:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-11
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-11:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-11:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-11
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-11:4004
+    stop_signal: SIGKILL
+
+
+  pbft-11:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-11:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-12:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-12
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-12.pub ]; then mv /shared_keys/validator-12.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-12.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-12:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-12:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-12
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-12:4004 \
+          --bind rest-api-12:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-12:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-12
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-12:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-12:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-12
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-12:4004
+    stop_signal: SIGKILL
+
+
+  pbft-12:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-12:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-13:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-13
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-13.pub ]; then mv /shared_keys/validator-13.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-13.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-13:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-13:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-13
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-13:4004 \
+          --bind rest-api-13:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-13:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-13
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-13:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-13:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-13
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-13:4004
+    stop_signal: SIGKILL
+
+
+  pbft-13:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-13:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-14:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-14
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-14.pub ]; then mv /shared_keys/validator-14.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-14.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-14:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-14:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-14
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-14:4004 \
+          --bind rest-api-14:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-14:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-14
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-14:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-14:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-14
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-14:4004
+    stop_signal: SIGKILL
+
+
+  pbft-14:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-14:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-15:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-15
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-15.pub ]; then mv /shared_keys/validator-15.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-15.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-15:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-15:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-15
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-15:4004 \
+          --bind rest-api-15:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-15:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-15
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-15:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-15:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-15
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-15:4004
+    stop_signal: SIGKILL
+
+
+  pbft-15:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-15:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-16:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-16
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-16.pub ]; then mv /shared_keys/validator-16.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-16.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-16:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-16:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-16
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-16:4004 \
+          --bind rest-api-16:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-16:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-16
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-16:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-16:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-16
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-16:4004
+    stop_signal: SIGKILL
+
+
+  pbft-16:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-16:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-17:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-17
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-17.pub ]; then mv /shared_keys/validator-17.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-17.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-17:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-17:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-17
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-17:4004 \
+          --bind rest-api-17:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-17:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-17
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-17:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-17:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-17
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-17:4004
+    stop_signal: SIGKILL
+
+
+  pbft-17:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-17:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-18:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-18
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-18.pub ]; then mv /shared_keys/validator-18.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-18.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-18:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-18:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-18
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-18:4004 \
+          --bind rest-api-18:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-18:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-18
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-18:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-18:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-18
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-18:4004
+    stop_signal: SIGKILL
+
+
+  pbft-18:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-18:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-19:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-19
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-19.pub ]; then mv /shared_keys/validator-19.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-19.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-19:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-19:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-19
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-19:4004 \
+          --bind rest-api-19:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-19:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-19
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-19:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-19:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-19
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-19:4004
+    stop_signal: SIGKILL
+
+
+  pbft-19:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-19:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-20:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-20
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-20.pub ]; then mv /shared_keys/validator-20.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-20.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-20:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-20:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-20
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-20:4004 \
+          --bind rest-api-20:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-20:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-20
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-20:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-20:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-20
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-20:4004
+    stop_signal: SIGKILL
+
+
+  pbft-20:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-20:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-21:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-21
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-21.pub ]; then mv /shared_keys/validator-21.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-21.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-21:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-21:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-21
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-21:4004 \
+          --bind rest-api-21:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-21:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-21
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-21:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-21:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-21
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-21:4004
+    stop_signal: SIGKILL
+
+
+  pbft-21:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-21:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-22:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-22
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-22.pub ]; then mv /shared_keys/validator-22.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-22.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-22:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-22:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-22
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-22:4004 \
+          --bind rest-api-22:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-22:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-22
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-22:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-22:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-22
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-22:4004
+    stop_signal: SIGKILL
+
+
+  pbft-22:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-22:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-23:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-23
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-23.pub ]; then mv /shared_keys/validator-23.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-23.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-23:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-23:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-23
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-23:4004 \
+          --bind rest-api-23:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-23:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-23
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-23:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-23:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-23
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-23:4004
+    stop_signal: SIGKILL
+
+
+  pbft-23:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-23:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-24:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-24
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-24.pub ]; then mv /shared_keys/validator-24.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-24.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-24:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800,tcp://validator-23:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-24:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-24
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-24:4004 \
+          --bind rest-api-24:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-24:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-24
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-24:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-24:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-24
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-24:4004
+    stop_signal: SIGKILL
+
+
+  pbft-24:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-24:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-25:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-25
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-25.pub ]; then mv /shared_keys/validator-25.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-25.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-25:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800,tcp://validator-23:8800,tcp://validator-24:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-25:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-25
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-25:4004 \
+          --bind rest-api-25:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-25:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-25
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-25:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-25:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-25
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-25:4004
+    stop_signal: SIGKILL
+
+
+  pbft-25:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-25:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-26:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-26
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-26.pub ]; then mv /shared_keys/validator-26.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-26.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-26:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800,tcp://validator-23:8800,tcp://validator-24:8800,tcp://validator-25:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-26:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-26
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-26:4004 \
+          --bind rest-api-26:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-26:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-26
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-26:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-26:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-26
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-26:4004
+    stop_signal: SIGKILL
+
+
+  pbft-26:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-26:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-27:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-27
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-27.pub ]; then mv /shared_keys/validator-27.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-27.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-27:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800,tcp://validator-23:8800,tcp://validator-24:8800,tcp://validator-25:8800,tcp://validator-26:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-27:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-27
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-27:4004 \
+          --bind rest-api-27:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-27:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-27
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-27:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-27:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-27
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-27:4004
+    stop_signal: SIGKILL
+
+
+  pbft-27:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-27:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-28:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-28
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-28.pub ]; then mv /shared_keys/validator-28.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-28.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-28:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800,tcp://validator-23:8800,tcp://validator-24:8800,tcp://validator-25:8800,tcp://validator-26:8800,tcp://validator-27:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-28:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-28
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-28:4004 \
+          --bind rest-api-28:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-28:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-28
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-28:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-28:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-28
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-28:4004
+    stop_signal: SIGKILL
+
+
+  pbft-28:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-28:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-29:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-29
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-29.pub ]; then mv /shared_keys/validator-29.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-29.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-29:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800,tcp://validator-23:8800,tcp://validator-24:8800,tcp://validator-25:8800,tcp://validator-26:8800,tcp://validator-27:8800,tcp://validator-28:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-29:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-29
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-29:4004 \
+          --bind rest-api-29:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-29:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-29
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-29:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-29:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-29
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-29:4004
+    stop_signal: SIGKILL
+
+
+  pbft-29:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-29:5050 -vv
+    stop_signal: SIGKILL
+
+  validator-0:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-0
+    volumes:
+      - skeys:/dynamic_keys
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        sawadm keygen validator-1 && \
+        sawadm keygen validator-2 && \
+        sawadm keygen validator-3 && \
+        sawadm keygen validator-4 && \
+        sawadm keygen validator-5 && \
+        sawadm keygen validator-6 && \
+        sawadm keygen validator-7 && \
+        sawadm keygen validator-8 && \
+        sawadm keygen validator-9 && \
+        sawadm keygen validator-10 && \
+        sawadm keygen validator-11 && \
+        sawadm keygen validator-12 && \
+        sawadm keygen validator-13 && \
+        sawadm keygen validator-14 && \
+        sawadm keygen validator-15 && \
+        sawadm keygen validator-16 && \
+        sawadm keygen validator-17 && \
+        sawadm keygen validator-18 && \
+        sawadm keygen validator-19 && \
+        sawadm keygen validator-20 && \
+        sawadm keygen validator-21 && \
+        sawadm keygen validator-22 && \
+        sawadm keygen validator-23 && \
+        sawadm keygen validator-24 && \
+        sawadm keygen validator-25 && \
+        sawadm keygen validator-26 && \
+        sawadm keygen validator-27 && \
+        sawadm keygen validator-28 && \
+        sawadm keygen validator-29 && \
+        sawadm keygen && \
+        sawset genesis \
+          -k /etc/sawtooth/keys/validator.priv \
+          -o config-genesis.batch && \
+        sawset proposal create \
+          -k /etc/sawtooth/keys/validator.priv \
+          sawtooth.consensus.algorithm.name=pbft \
+          sawtooth.consensus.algorithm.version=0.1 \
+          sawtooth.consensus.pbft.members=\\['\\\!dq!'$$(cat /etc/sawtooth/keys/validator.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-1.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-2.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-3.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-4.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-5.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-6.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-7.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-8.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-9.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-10.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-11.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-12.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-13.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-14.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-15.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-16.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-17.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-18.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-19.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-20.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-21.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-22.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-23.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-24.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-25.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-26.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-27.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-28.pub)'\\\!dq!','\\\!dq!'$$(cat /etc/sawtooth/keys/validator-29.pub)'\\\!dq!'\\] \
+          sawtooth.consensus.pbft.block_duration=100 \
+          sawtooth.consensus.pbft.view_change_timeout=4000 \
+          sawtooth.consensus.pbft.message_timeout=40 \
+          sawtooth.consensus.pbft.max_log_size=1000 \
+          -o config.batch && \
+        sawadm genesis \
+          config-genesis.batch config.batch && \
+        cp /etc/sawtooth/keys/validator* /dynamic_keys && \
+        mv /etc/sawtooth/keys/validator-* /shared_keys && \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-0:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+            --opentsdb-db telegraf \
+            --opentsdb-url http://influxdb:8086 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-0:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-0
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-0:4004 \
+          --bind rest-api-0:8008 \
+          --opentsdb-db telegraf \
+          --opentsdb-url http://influxdb:8086
+
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-0:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-0
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-0:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-0:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-0
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-0:4004
+    stop_signal: SIGKILL
+
+
+  pbft-0:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-0:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-1:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-1
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-1.pub ]; then mv /shared_keys/validator-1.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-1.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-1:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-1:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-1
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-1:4004 \
+          --bind rest-api-1:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-1:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-1
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-1:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-1:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-1
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-1:4004
+    stop_signal: SIGKILL
+
+
+  pbft-1:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-1:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-2:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-2
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-2.pub ]; then mv /shared_keys/validator-2.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-2.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-2:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-2:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-2
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-2:4004 \
+          --bind rest-api-2:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-2:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-2
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-2:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-2:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-2
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-2:4004
+    stop_signal: SIGKILL
+
+
+  pbft-2:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-2:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-3:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-3
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-3.pub ]; then mv /shared_keys/validator-3.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-3.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-3:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-3:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-3
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-3:4004 \
+          --bind rest-api-3:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-3:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-3
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-3:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-3:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-3
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-3:4004
+    stop_signal: SIGKILL
+
+
+  pbft-3:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-3:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-4:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-4
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-4.pub ]; then mv /shared_keys/validator-4.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-4.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-4:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-4:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-4
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-4:4004 \
+          --bind rest-api-4:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-4:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-4
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-4:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-4:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-4
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-4:4004
+    stop_signal: SIGKILL
+
+
+  pbft-4:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-4:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-5:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-5
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-5.pub ]; then mv /shared_keys/validator-5.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-5.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-5:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-5:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-5
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-5:4004 \
+          --bind rest-api-5:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-5:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-5
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-5:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-5:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-5
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-5:4004
+    stop_signal: SIGKILL
+
+
+  pbft-5:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-5:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-6:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-6
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-6.pub ]; then mv /shared_keys/validator-6.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-6.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-6:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-6:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-6
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-6:4004 \
+          --bind rest-api-6:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-6:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-6
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-6:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-6:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-6
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-6:4004
+    stop_signal: SIGKILL
+
+
+  pbft-6:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-6:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-7:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-7
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-7.pub ]; then mv /shared_keys/validator-7.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-7.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-7:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-7:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-7
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-7:4004 \
+          --bind rest-api-7:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-7:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-7
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-7:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-7:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-7
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-7:4004
+    stop_signal: SIGKILL
+
+
+  pbft-7:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-7:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-8:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-8
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-8.pub ]; then mv /shared_keys/validator-8.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-8.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-8:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-8:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-8
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-8:4004 \
+          --bind rest-api-8:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-8:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-8
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-8:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-8:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-8
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-8:4004
+    stop_signal: SIGKILL
+
+
+  pbft-8:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-8:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-9:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-9
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-9.pub ]; then mv /shared_keys/validator-9.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-9.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-9:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-9:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-9
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-9:4004 \
+          --bind rest-api-9:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-9:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-9
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-9:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-9:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-9
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-9:4004
+    stop_signal: SIGKILL
+
+
+  pbft-9:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-9:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-10:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-10
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-10.pub ]; then mv /shared_keys/validator-10.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-10.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-10:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-10:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-10
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-10:4004 \
+          --bind rest-api-10:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-10:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-10
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-10:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-10:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-10
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-10:4004
+    stop_signal: SIGKILL
+
+
+  pbft-10:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-10:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-11:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-11
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-11.pub ]; then mv /shared_keys/validator-11.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-11.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-11:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-11:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-11
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-11:4004 \
+          --bind rest-api-11:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-11:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-11
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-11:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-11:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-11
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-11:4004
+    stop_signal: SIGKILL
+
+
+  pbft-11:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-11:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-12:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-12
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-12.pub ]; then mv /shared_keys/validator-12.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-12.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-12:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-12:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-12
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-12:4004 \
+          --bind rest-api-12:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-12:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-12
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-12:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-12:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-12
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-12:4004
+    stop_signal: SIGKILL
+
+
+  pbft-12:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-12:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-13:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-13
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-13.pub ]; then mv /shared_keys/validator-13.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-13.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-13:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-13:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-13
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-13:4004 \
+          --bind rest-api-13:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-13:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-13
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-13:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-13:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-13
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-13:4004
+    stop_signal: SIGKILL
+
+
+  pbft-13:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-13:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-14:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-14
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-14.pub ]; then mv /shared_keys/validator-14.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-14.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-14:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-14:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-14
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-14:4004 \
+          --bind rest-api-14:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-14:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-14
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-14:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-14:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-14
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-14:4004
+    stop_signal: SIGKILL
+
+
+  pbft-14:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-14:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-15:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-15
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-15.pub ]; then mv /shared_keys/validator-15.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-15.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-15:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-15:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-15
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-15:4004 \
+          --bind rest-api-15:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-15:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-15
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-15:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-15:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-15
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-15:4004
+    stop_signal: SIGKILL
+
+
+  pbft-15:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-15:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-16:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-16
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-16.pub ]; then mv /shared_keys/validator-16.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-16.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-16:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-16:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-16
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-16:4004 \
+          --bind rest-api-16:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-16:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-16
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-16:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-16:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-16
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-16:4004
+    stop_signal: SIGKILL
+
+
+  pbft-16:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-16:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-17:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-17
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-17.pub ]; then mv /shared_keys/validator-17.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-17.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-17:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-17:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-17
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-17:4004 \
+          --bind rest-api-17:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-17:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-17
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-17:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-17:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-17
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-17:4004
+    stop_signal: SIGKILL
+
+
+  pbft-17:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-17:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-18:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-18
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-18.pub ]; then mv /shared_keys/validator-18.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-18.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-18:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-18:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-18
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-18:4004 \
+          --bind rest-api-18:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-18:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-18
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-18:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-18:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-18
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-18:4004
+    stop_signal: SIGKILL
+
+
+  pbft-18:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-18:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-19:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-19
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-19.pub ]; then mv /shared_keys/validator-19.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-19.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-19:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-19:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-19
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-19:4004 \
+          --bind rest-api-19:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-19:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-19
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-19:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-19:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-19
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-19:4004
+    stop_signal: SIGKILL
+
+
+  pbft-19:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-19:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-20:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-20
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-20.pub ]; then mv /shared_keys/validator-20.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-20.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-20:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-20:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-20
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-20:4004 \
+          --bind rest-api-20:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-20:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-20
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-20:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-20:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-20
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-20:4004
+    stop_signal: SIGKILL
+
+
+  pbft-20:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-20:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-21:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-21
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-21.pub ]; then mv /shared_keys/validator-21.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-21.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-21:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-21:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-21
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-21:4004 \
+          --bind rest-api-21:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-21:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-21
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-21:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-21:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-21
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-21:4004
+    stop_signal: SIGKILL
+
+
+  pbft-21:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-21:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-22:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-22
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-22.pub ]; then mv /shared_keys/validator-22.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-22.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-22:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-22:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-22
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-22:4004 \
+          --bind rest-api-22:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-22:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-22
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-22:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-22:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-22
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-22:4004
+    stop_signal: SIGKILL
+
+
+  pbft-22:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-22:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-23:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-23
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-23.pub ]; then mv /shared_keys/validator-23.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-23.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-23:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-23:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-23
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-23:4004 \
+          --bind rest-api-23:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-23:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-23
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-23:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-23:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-23
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-23:4004
+    stop_signal: SIGKILL
+
+
+  pbft-23:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-23:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-24:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-24
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-24.pub ]; then mv /shared_keys/validator-24.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-24.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-24:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800,tcp://validator-23:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-24:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-24
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-24:4004 \
+          --bind rest-api-24:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-24:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-24
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-24:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-24:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-24
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-24:4004
+    stop_signal: SIGKILL
+
+
+  pbft-24:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-24:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-25:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-25
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-25.pub ]; then mv /shared_keys/validator-25.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-25.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-25:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800,tcp://validator-23:8800,tcp://validator-24:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-25:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-25
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-25:4004 \
+          --bind rest-api-25:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-25:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-25
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-25:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-25:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-25
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-25:4004
+    stop_signal: SIGKILL
+
+
+  pbft-25:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-25:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-26:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-26
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-26.pub ]; then mv /shared_keys/validator-26.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-26.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-26:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800,tcp://validator-23:8800,tcp://validator-24:8800,tcp://validator-25:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-26:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-26
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-26:4004 \
+          --bind rest-api-26:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-26:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-26
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-26:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-26:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-26
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-26:4004
+    stop_signal: SIGKILL
+
+
+  pbft-26:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-26:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-27:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-27
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-27.pub ]; then mv /shared_keys/validator-27.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-27.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-27:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800,tcp://validator-23:8800,tcp://validator-24:8800,tcp://validator-25:8800,tcp://validator-26:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-27:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-27
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-27:4004 \
+          --bind rest-api-27:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-27:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-27
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-27:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-27:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-27
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-27:4004
+    stop_signal: SIGKILL
+
+
+  pbft-27:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-27:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-28:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-28
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-28.pub ]; then mv /shared_keys/validator-28.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-28.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-28:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800,tcp://validator-23:8800,tcp://validator-24:8800,tcp://validator-25:8800,tcp://validator-26:8800,tcp://validator-27:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-28:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-28
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-28:4004 \
+          --bind rest-api-28:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-28:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-28
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-28:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-28:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-28
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-28:4004
+    stop_signal: SIGKILL
+
+
+  pbft-28:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-28:5050 -vv
+    stop_signal: SIGKILL
+
+
+  validator-29:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: sawtooth-validator-29
+    volumes:
+      - ./Assets:/var/Assets
+      - keys:/shared_keys
+    expose:
+      - 4004
+      - 5050
+      - 8800
+    command: !dq!bash -c \!dq!\
+        while true; do if [ -e /shared_keys/validator-29.pub ]; then mv /shared_keys/validator-29.priv /etc/sawtooth/keys/validator.priv && mv /shared_keys/validator-29.pub /etc/sawtooth/keys/validator.pub; break; fi; sleep 0.5; done; \
+        echo $$(cat /etc/sawtooth/keys/validator.pub); \
+        sawtooth-validator \
+            --endpoint tcp://validator-29:8800 \
+            --bind component:tcp://eth0:4004 \
+            --bind network:tcp://eth0:8800 \
+            --bind consensus:tcp://eth0:5050 \
+            --peering static \
+            --peers tcp://validator-0:8800,tcp://validator-1:8800,tcp://validator-2:8800,tcp://validator-3:8800,tcp://validator-4:8800,tcp://validator-5:8800,tcp://validator-6:8800,tcp://validator-7:8800,tcp://validator-8:8800,tcp://validator-9:8800,tcp://validator-10:8800,tcp://validator-11:8800,tcp://validator-12:8800,tcp://validator-13:8800,tcp://validator-14:8800,tcp://validator-15:8800,tcp://validator-16:8800,tcp://validator-17:8800,tcp://validator-18:8800,tcp://validator-19:8800,tcp://validator-20:8800,tcp://validator-21:8800,tcp://validator-22:8800,tcp://validator-23:8800,tcp://validator-24:8800,tcp://validator-25:8800,tcp://validator-26:8800,tcp://validator-27:8800,tcp://validator-28:8800
+            --scheduler parallel \
+            --maximum-peer-connectivity 30 \
+    \!dq!!dq!
+    stop_signal: SIGKILL
+
+
+  rest-api-29:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: sawtooth-rest-api-default-29
+    expose:
+      - 8008
+    command: |
+      bash -c !dq!
+        sawtooth-rest-api \
+          --connect tcp://validator-29:4004 \
+          --bind rest-api-29:8008 \
+      !dq!
+    stop_signal: SIGKILL
+
+
+  settings-tp-29:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-29
+    expose:
+      - 4004
+    command: settings-tp -C tcp://validator-29:4004
+    stop_signal: SIGKILL
+
+
+  intkey-tp-29:
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
+    container_name: sawtooth-intkey-tp-29
+    expose:
+      - 4004
+    command: intkey-tp-python -C tcp://validator-29:4004
+    stop_signal: SIGKILL
+
+
+  pbft-29:
+    image: sawtooth-pbft-engine-local
+    build:
+      context: ./sawtooth-pbft
+      dockerfile: ./sawtooth-pbft/Dockerfile
+    volumes:
+      - ./sawtooth-pbft:/project/sawtooth-pbft
+      - cargo-registry:/root/.cargo/registry
+      - cargo-git:/root/.cargo/git
+    working_dir: /project/sawtooth-pbft/
+    command: ./target/debug/pbft-engine --connect tcp://validator-29:5050 -vv
+    stop_signal: SIGKILL
+
