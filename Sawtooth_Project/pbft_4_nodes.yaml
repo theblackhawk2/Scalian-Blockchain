@@ -7,6 +7,16 @@ volumes:
   cargo-target:
 
 services:
+  front-service:
+    image: front-bc
+    container_name: front-container
+    volumes: 
+      - ./ScalianChain:/usr/src/app
+    ports:
+      - 4200:4200
+    command: 
+      bash -c "npm install && ng serve --host 0.0.0.0 --port 4200" 
+
   shell:
     image: hyperledger/sawtooth-all:1.1
     container_name: sawtooth-shell-default
@@ -135,6 +145,7 @@ services:
     container_name: sawtooth-rest-api-default-0
     expose:
       - 8008
+      - 80
     command: |
       bash -c "
         sawtooth-rest-api \

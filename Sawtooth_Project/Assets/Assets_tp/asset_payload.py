@@ -7,7 +7,8 @@ class AssetPayload:
 
 		try: 
 		#Make the format of the payload , csv utf-8 encoded
-			name, serie, action, new_owner = payload.decode().split(',')
+			#name, serie, action, new_owner = payload.decode().split(',')
+			print(payload.decode())
 		except ValueError:
 			raise InvalidTransaction("[-] Encodage de payload incorrect !")
 		 

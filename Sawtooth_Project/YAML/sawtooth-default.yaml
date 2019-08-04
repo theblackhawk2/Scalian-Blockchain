@@ -18,37 +18,28 @@ version: "2.1"
 services:
 
   settings-tp:
-    image: hyperledger/sawtooth-settings-tp:chime
+    image: hyperledger/sawtooth-settings-tp:1.1
     container_name: sawtooth-settings-tp-default
     depends_on:
       - validator
     entrypoint: settings-tp -vv -C tcp://validator:4004
 
   intkey-tp-python:
-    image: hyperledger/sawtooth-intkey-tp-python:chime
+    image: hyperledger/sawtooth-intkey-tp-python:1.1
     container_name: sawtooth-intkey-tp-python-default
     depends_on:
       - validator
     entrypoint: intkey-tp-python -vv -C tcp://validator:4004
 
   xo-tp-python:
-    image: hyperledger/sawtooth-xo-tp-python:chime
+    image: hyperledger/sawtooth-xo-tp-python:1.1
     container_name: sawtooth-xo-tp-python-default
     depends_on:
       - validator
     entrypoint: xo-tp-python -vv -C tcp://validator:4004
 
-  asset-tp-python:
-    image: hyperledger/sawtooth-shell:chime
-    container_name: sawtooth-asset-tp-default
-    volumes:
-      - ./SecretAssets:/var/SecretAssets
-    depends_on:
-      - validator
-    entrypoint: python3 /var/SecretAssets/Assets_tp/main.py -C tcp://validator:4004
-
   validator:
-    image: hyperledger/sawtooth-validator:chime
+    image: hyperledger/sawtooth-validator:1.1
     container_name: sawtooth-validator-default
     expose:
       - 4004
@@ -73,14 +64,14 @@ services:
         \""
 
   devmode-engine:
-    image: hyperledger/sawtooth-devmode-engine-rust:chime
+    image: hyperledger/sawtooth-devmode-engine-rust:1.1
     container_name: sawtooth-devmode-engine-rust-default
     depends_on:
       - validator
     entrypoint: devmode-engine-rust -C tcp://validator:5050
 
   rest-api:
-    image: hyperledger/sawtooth-rest-api:chime
+    image: hyperledger/sawtooth-rest-api:1.1
     container_name: sawtooth-rest-api-default
     ports:
       - "8008:8008"
@@ -89,13 +80,11 @@ services:
     entrypoint: sawtooth-rest-api -C tcp://validator:4004 --bind rest-api:8008
 
   shell:
-    image: hyperledger/sawtooth-shell:chime
+    image: hyperledger/sawtooth-all:1.1
     container_name: sawtooth-shell-default
-    volumes:
-      - ./SecretAssets:/var/SecretAssets
     depends_on:
       - rest-api
     entrypoint: "bash -c \"\
-        sawtooth keygen --force && \
+        sawtooth keygen && \
         tail -f /dev/null \
         \""

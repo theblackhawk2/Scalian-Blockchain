@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <title>Scalian Tracabilité</title>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <nav class="navbar navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+          <img src="img/scalian.png" class="d-inline-block align-top img-logo" alt="">
+        </a>
+      </nav>
+
+      <h3> 1. Choisissez votre structure de Supply chain </h3>
+       <div class="row">
+         <div class="col-lg-3 col-md-3 col-sm-3" id="actors">
+
+             <ul>
+               <li id="fournisseur"><img src="img/fournisseur.png"></li>
+               <li id="producteur"><img src="img/producteur.png" class="oversize"></li>
+               <li id="detaillant"><img src="img/distributeur.png"></li>
+               <li id="distributeur"><img src="img/detaillant.png"></li>
+               <li id="client"><img src="img/client.png" class="oversize"></li>
+             </ul>
+         </div>
+
+         <div class="col-lg-7 col-md-7 col-sm-7">
+           <canvas id="myCanvas" >
+           </canvas>
+         </div>
+         <div class="col-md-2 col-lg-2 col-sm-2">
+           <button type="button" name="valider" class="btn btn-success" id="validateSupply">Valider</button>
+         </div>
+       </div>
+
+        <h3> 2. Choisissez l'autorité de partage de secrets</h3>
+        <div class="row">
+            <div class="col-md-3 col-lg-3 col-sm-3">
+
+            </div>
+            <div class="col-md-7 col-lg-7 col-sm-7">
+                <ul id="secretAuth" class="list-group">
+                </ul>
+            </div>
+        </div>
+        <div class="row ">
+          <div class="col-md-5 col-lg-5 col-sm-5">
+
+          </div>
+          <div class="col-md-3 col-lg-3 col-sm-3">
+            <button name="button" class="btn btn-success" id="validateForm">Valider</button>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-modal">
+        <div class="modal-content">
+          <form class="" action="" method="post">
+            <input id="nom" type="text" placeholder="Nom de la societe">
+            <input id = "Submit" type="button" name="" value="submit">
+          </form>
+        </div>
+
+      </div>
+        <!-- Modal Section  -->
+
+
+
+
+
+
+  <script src ="js/main.js"></script>
+
+  </body>
+</html>
