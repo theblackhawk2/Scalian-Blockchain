@@ -9,7 +9,7 @@ class SecretAssetPayload:
 		try: 
 		#Make the format of the payload , csv utf-8 encoded
 			action , params = payload.decode().split(';')[5],payload.decode().split(';')[6]
-			print("This is the action "+ action)
+			print("This is the action params"+ params)
 
 		except ValueError:
 			raise InvalidTransaction("[-] Encodage de payload incorrect !")
@@ -19,15 +19,19 @@ class SecretAssetPayload:
 			for key in Requiredkeys: 
 				if key not in json.loads(params):
 					raise InvalidTransaction("[-] Champ manquant : " + key)
+			self._action = action
+			self._params = json.loads(params) 
 			
 		elif action == "read":
-			pass
+			self._params = params
 		elif action == "share":
 			pass
 		else : 
 			raise InvalidTransaction("[-] Type de transaction non reconnu")
+
+			
 		self._action = action
-		self._params = json.loads(params) 
+		
 
 
 	@staticmethod

@@ -31,19 +31,49 @@ class SecretAssetTransactionHandler(TransactionHandler):
 		
 		asset_payload = SecretAssetPayload.from_bytes(transaction.payload)
 		asset_state   = SecretAssetState(context)
+		
 
+		print("The payload action is " + asset_payload.action)
 		if asset_payload.action == "write":
-			print(json.loads(asset_payload.params['policy'])['members'])
+			
 			for member in json.loads(asset_payload.params['policy'])['members']:
 				# Inputs : action, pubkey, Hash of Transaction
 				if asset_state.get_asset("write",member[0],hashlib.sha512(json.dumps(asset_payload.params,sort_keys=True).encode()).hexdigest()) is not None:
 					raise InvalidTransaction("Transaction Invalide : Secret deja existant")
 				secretAsset = SecretAsset(jfile = asset_payload.params)
-				asset_state.set_asset(asset_payload.action,member[0],hashlib.sha512(json.dumps(asset_payload.params,sort_keys=True).encode()).hexdigest(),secretAsset)
+				txw = hashlib.sha512(json.dumps(asset_payload.params,sort_keys=True).encode()).hexdigest()
+				print(" In Write : Member  :" + str(member))
+				print(" In Write : Txw     :" + str(txw))
+				asset_state.set_asset(asset_payload.action,member[0],txw,secretAsset)
 				
 			
 		elif asset_payload.action == "read":
-			pass
+			# Params for this action should be replaced with a query service for existing transactions and replace them with txw
+			txw = asset_payload.params
+			# we will test with the first mock member, this one should be changed later with the sender
+			member = ['101327191784287492373383809902168603188987799081777419466034047135455849629090','23776359816484729224351517659128510016876926467066255348726241832497012031432']
+			print("Member : " + str(member))
+			print(" Txw   : " + txw)
+			print(json.dumps(asset_payload.params,sort_keys=True))
+			if asset_state.get_asset("write",member[0], txw) is not None:
+				
+				#Testing id read was already granted (Creating method to insert transactions)
+				#If not create method to insert read transactions 
+			else:
+				raise InvalidTransaction("Demande d'accès a un secret non existant")
+
+		elif asset_payload.action = "share":
+
+				"""
+				Asset = asset_state.get_asset("write",member[0], txw)
+				if member in Asset.policy:
+					print("Secret deja existant et lecteur autorisée, enregistrement de la demande read")
+				else: 
+					print("Secret existant mais utilisateur non autorisé")
+				"""
+			else:
+				raise InvalidTransaction("Transaction Invalide : secret Inexistant")
+
 			"""
 			asset = asset_state.get_asset(asset_payload.serie)
 		    

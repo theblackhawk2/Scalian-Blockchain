@@ -143,54 +143,8 @@ if __name__ == "__main__":
     TransactionPayload["Hc"]              = hashlib.sha256(TransactionPayload["encMessage"].encode()).hexdigest()
 
     LIST_PAYLOAD.append(json.dumps(TransactionPayload,sort_keys=True))
-    LIST_PAYLOAD[6] = 'e2534b87c8bbfc683cd27dc13834239671ca1b18553cf84f86e17f77ef043962d9ebcbc690579e1eacaef7e014698828a05ed6f67b46395a7b8a736818399203'
-    # Gathering and encoding all data 
-    print("adress lists" + str([make_address("write", pubkey[0]) for pubkey in list_policy]))
-    payload_bytes = (';').join(LIST_PAYLOAD).encode()   
-    txn_header_bytes = TransactionHeader(
-        family_name='secret_asset',
-        family_version='1.0',
-        inputs = [make_address("write", pubkey[0]) for pubkey in list_policy] + [make_address("read", pubkey[0]) for pubkey in list_policy],
-        outputs = [make_address("write", pubkey[0]) for pubkey in list_policy] + [make_address("read", pubkey[0]) for pubkey in list_policy],
-        signer_public_key=signer.get_public_key().as_hex(),
-        batcher_public_key=signer.get_public_key().as_hex(),
-        dependencies=[],
-        payload_sha512=sha512(payload_bytes).hexdigest()
-        ).SerializeToString()
+    payload_bytes = (';').join(LIST_PAYLOAD)
 
-    signature = signer.sign(txn_header_bytes)
-
-    txn = Transaction(
-        header=txn_header_bytes,
-        header_signature=signature,
-        payload=payload_bytes
-    )
-
-    txns = [txn]
-
-    batch_header_bytes = BatchHeader(
-        signer_public_key=signer.get_public_key().as_hex(),
-        transaction_ids=[txn.header_signature for txn in txns],
-    ).SerializeToString()
-
-    signature = signer.sign(batch_header_bytes)
-
-    batch = Batch(
-        header=batch_header_bytes,
-        header_signature=signature,
-        transactions=txns
-    )
-
-    batch_list_bytes = BatchList(batches=[batch]).SerializeToString()
-
-    try:
-        print("Envoi de la requete a l'adresse : "+VALIDATOR_URL)
-        request = urllib.request.Request(
-        VALIDATOR_URL + '/batches',
-        batch_list_bytes,
-        method='POST',
-        headers={'Content-Type': 'application/octet-stream'})
-        response = urllib.request.urlopen(request)
-
-    except HTTPError as e:
-        response = e.file
+    file  =  open("mock_file.txt", "w")
+    file.write(payload_bytes)
+    file.close()

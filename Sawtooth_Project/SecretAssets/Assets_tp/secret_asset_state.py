@@ -44,12 +44,8 @@ class SecretAssetState:
 
     def _serialize(self, transactions):
         print("In serialize")
-        print(transactions)
         transaction_strs = []
         for tx, s in transactions.items():
-            fields = [tx, s.Hc ,s.encMessage,("$").join(s.encryptedShares),s.policy,s.polyCommitments]
-            print("The poly commitments " + str(s.polyCommitments))
-            print([type(f) for f in fields])
             transaction_str = ";".join(
             [tx, s.Hc ,s.encMessage,("$").join(s.encryptedShares),s.policy , str(s.polyCommitments)])
             transaction_strs.append(transaction_str)
@@ -65,7 +61,7 @@ class SecretAssetState:
                 polyCommitments = ast.literal_eval(polyCommitments)
                 jfile = {
                     "Hc":Hc,
-                    "enMessage":enMessage,
+                    "encMessage":encMessage,
                     "encryptedShares":encryptedShares,
                     "policy":policy,
                     "polyCommitments":polyCommitments
@@ -73,7 +69,7 @@ class SecretAssetState:
                 transactions[txn] = SecretAsset(jfile = jfile)
         except ValueError:
             raise InternalError("Echec de decodage,veuillez choisir le bon format")
-
+        print("keys of assets "+ str(transactions.keys()))
         return transactions
 
     def _store_assets(self, action,pubkey, assets):
@@ -99,7 +95,7 @@ class SecretAssetState:
 
     def _load_assets(self, action, pubkey):
         address = self._make_asset_address(action,pubkey)
-        
+        print(str(self._address_cache))
         if address in self._address_cache:
             print("Address in address cache")
             if self._address_cache[address]:
@@ -125,5 +121,4 @@ class SecretAssetState:
         return assets
 
     def _make_asset_address(self,action,pubkey):
-        print("Le namespace choisi est ..."+ ASSET_NAMESPACE) 
         return ASSET_NAMESPACE + hashlib.sha512(action.encode()).hexdigest()[:4] + hashlib.sha512(pubkey.encode()).hexdigest()[:60]

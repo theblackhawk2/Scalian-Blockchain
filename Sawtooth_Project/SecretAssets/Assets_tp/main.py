@@ -39,8 +39,12 @@ if __name__ == "__main__":
     
     for opt, arg in opts:
         if opt in ("-C", "--connect"):
-            
-            main(arg)
+
+            try:   
+                main(arg)
+            except Exception as e:  # pylint: disable=broad-except
+                print("Error: {}".format(e))
+        
         else:
             sys.exit(2)
 
